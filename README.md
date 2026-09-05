@@ -2,7 +2,7 @@
 
 An end-to-end Machine Learning project built on the [UCI Online Retail dataset](https://archive.ics.uci.edu/dataset/352/online+retail) — combining **customer segmentation**, **churn prediction**, and a **product recommender system** into a single, connected pipeline.
 
-This project was built to apply the full DeepLearning.AI Machine Learning Specialization (Andrew Ng) — supervised learning, neural networks, and unsupervised learning/recommenders — on one real-world dataset, rather than three disconnected exercises.
+This project was built to apply the full DeepLearning.AI Machine Learning Specialization (Andrew Ng) — supervised learning, neural networks, and unsupervised learning/recommenders — on one real-world dataset, rather than three disconnected exercises. It goes one step further than the coursework itself: the trained models are served through a live API and a working front-end, so the project is a usable tool, not just a set of notebooks.
 
 ## The Story
 
@@ -67,7 +67,18 @@ Three unified strategies behind a single `unified_recommend()` function, chosen 
 | New, budget given | Products priced near the stated budget, ranked by popularity |
 | Existing customer | Item-based Collaborative Filtering (cosine similarity over co-purchase patterns) |
 
-All three return the same output shape (`StockCode`, `Description`, `UnitPrice`), so downstream consumers (e.g. a future front-end) don't need to know which strategy produced the result.
+All three return the same output shape (`StockCode`, `Description`, `UnitPrice`, `image_path`), so downstream consumers don't need to know which strategy produced the result.
+
+### 4. Deployment: API + Front-End
+
+The three trained systems (segmentation, churn, recommender) are wrapped behind a single **FastAPI** endpoint (`app.py`) so a caller sends customer data once and gets everything back together:
+
+- **Existing customer** (`customer_id`): returns their `Segment`, `churn_risk`, and personalized recommendations from Collaborative Filtering.
+- **New customer**: returns Best Sellers, or budget-ranked products if a `budget` is provided — no segment or churn risk, since there's no purchase history to compute them from.
+
+A lightweight **HTML/CSS/JS front-end** (`index.html`) consumes this API directly: a toggle for new vs. existing customer, an ID/budget form, and a color-coded product grid with segment and churn-risk cards.
+
+**Product images**: generated on first request via the Hugging Face Inference API (`image_generator.py`) and cached to disk (`images/products/`), so each product is only generated once regardless of how many times it's recommended afterward. If image generation is unavailable (e.g. provider credits exhausted), the front-end falls back to a colored category icon instead of breaking the recommendation itself.
 
 ## Tech Stack
 
@@ -78,6 +89,9 @@ All three return the same output shape (`StockCode`, `Description`, `UnitPrice`)
 - **Deep Learning**: TensorFlow / Keras
 - **Sparse Data**: SciPy
 - **Model Persistence**: Joblib
+- **Deployment**: FastAPI, Uvicorn
+- **Image Generation**: Hugging Face Inference API (`huggingface_hub`), python-dotenv
+- **Front-End**: HTML, CSS, vanilla JavaScript
 
 ## Repository Structure
 
@@ -85,10 +99,15 @@ All three return the same output shape (`StockCode`, `Description`, `UnitPrice`)
 customer-intelligence-system/
 ├── README.md
 ├── requirements.txt
+├── .env                          ← not committed (see Setup below)
+├── .gitignore
+├── app.py                        ← FastAPI backend (Phase 8)
+├── image_generator.py            ← product image generation + caching
+├── index.html                    ← front-end
 ├── data/
-│   ├── Online_Retail.xlsx
-│   ├── clean_online_retail.csv
-│   └── customer_segments.csv
+│   ├── clean_online_retail.csv   ← not committed (regenerate, see below)
+│   ├── customer_segments.csv
+│   └── customer_segments_with_churn.csv
 ├── notebooks/
 │   ├── 01_data_cleaning.ipynb
 │   ├── 02_rfm_segmentation.ipynb
@@ -99,27 +118,65 @@ customer-intelligence-system/
 │   ├── scaler.pkl
 │   ├── kmeans_model.pkl
 │   ├── churn_model.pkl
-│   ├── item_similarity.pkl
 │   ├── product_lookup.pkl
-│   └── best_sellers.pkl
+│   ├── avg_price.pkl
+│   ├── best_sellers.pkl
+│   ├── item_similarity.pkl       ← not committed (regenerate, see below)
+│   └── conf_matrix.pkl           ← not committed (regenerate, see below)
 └── images/
+    └── products/                 ← cached generated product images
 ```
 
-## How to Run
+**Note on excluded files**: `item_similarity.pkl` and `conf_matrix.pkl` exceed GitHub's 100 MB file size limit and are excluded via `.gitignore`. Both are deterministic outputs of `05_recommender.ipynb` — running that notebook once regenerates them locally. The raw dataset (`Online_Retail.xlsx`) and its cleaned version are excluded for the same size-related reason.
+
+## Setup & How to Run
+
+**1. Clone and install dependencies**
 
 ```bash
-git clone <repo-url>
+git clone https://github.com/AhmedEldeeb8805/customer-intelligence-system.git
 cd customer-intelligence-system
 pip install -r requirements.txt
 ```
 
-Then run the notebooks in order (01 → 05), as each one saves outputs consumed by the next.
+**2. Get the raw dataset**
+
+Download `Online Retail.xlsx` from the [UCI repository](https://archive.ics.uci.edu/dataset/352/online+retail) and place it in `data/`.
+
+**3. Run the notebooks in order**
+
+```
+01_data_cleaning.ipynb → 02_rfm_segmentation.ipynb → 03_churn_prediction.ipynb → 04_neural_network.ipynb → 05_recommender.ipynb
+```
+
+Each notebook saves outputs consumed by the next, and notebook 05 regenerates the two large model files excluded from the repo (`item_similarity.pkl`, `conf_matrix.pkl`).
+
+**4. Set up image generation (optional)**
+
+Create a `.env` file in the project root with a Hugging Face token that has *"Make calls to Inference Providers"* permission:
+
+```
+HF_TOKEN=hf_your_token_here
+```
+
+Without this step, the API still works — product cards simply fall back to a colored category icon instead of a generated image.
+
+**5. Run the API**
+
+```bash
+uvicorn app:app --reload
+```
+
+**6. Open the front-end**
+
+Open `index.html` in a browser (or serve it, e.g. via VS Code Live Server) while the API is running on `127.0.0.1:8000`.
 
 ## Key Takeaways
 
 - Choosing K for K-Means isn't always a single clean "elbow" — validating with a second metric (Silhouette Score) can change the decision, and it did here.
 - Comparing multiple models on the *same* features (rather than tuning one model in isolation) reveals whether the bottleneck is the model or the data — here, it was the data.
 - A recommender system doesn't need one algorithm; routing between strategies based on what's known about the customer (cold start vs. history) is a standard, practical pattern.
+- Deployment surfaces problems notebooks hide: a 100 MB+ similarity matrix works fine locally but breaks a `git push`, and a single failed image-generation call can silently take down an otherwise-successful API response if it isn't isolated with its own error handling.
 
 ---
 
