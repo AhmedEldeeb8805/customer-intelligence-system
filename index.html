@@ -1,0 +1,664 @@
+```html
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Customer Intelligence Recommender</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=Manrope:wght@500;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#F5F7FB;
+    --surface:#FFFFFF;
+    --ink:#161B33;
+    --ink-soft:#6B7280;
+    --brand:#0E7C7B;
+    --brand-dark:#0A5F5E;
+    --coral:#FF6B4A;
+    --amber:#FFB020;
+    --violet:#6C5CE7;
+    --line:#E7E9F2;
+    --shadow: 0 10px 30px -12px rgba(22,27,51,0.18);
+  }
+
+  *{ box-sizing:border-box; }
+
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:'Cairo', sans-serif;
+    min-height:100vh;
+  }
+
+  .hero{
+    background:linear-gradient(120deg, var(--brand) 0%, var(--brand-dark) 55%, #133B57 100%);
+    color:#fff;
+    padding:56px 20px 120px;
+    text-align:center;
+    position:relative;
+    overflow:hidden;
+  }
+
+  .hero::before{
+    content:"";
+    position:absolute;
+    width:520px; height:520px;
+    background:radial-gradient(circle, rgba(255,176,32,0.35), transparent 70%);
+    top:-220px; right:-160px;
+  }
+
+  .hero::after{
+    content:"";
+    position:absolute;
+    width:420px; height:420px;
+    background:radial-gradient(circle, rgba(255,107,74,0.30), transparent 70%);
+    bottom:-220px; left:-140px;
+  }
+
+  .hero-inner{
+    position:relative;
+    z-index:1;
+    max-width:640px;
+    margin:0 auto;
+  }
+
+  .hero h1{
+    font-family:'Manrope', sans-serif;
+    font-weight:800;
+    font-size:34px;
+    margin:0 0 10px;
+    letter-spacing:-0.5px;
+  }
+
+  .hero p{
+    margin:0;
+    font-size:15px;
+    opacity:0.85;
+    line-height:1.7;
+  }
+
+  .container{
+    max-width:920px;
+    margin:-72px auto 60px;
+    padding:0 20px;
+    position:relative;
+    z-index:2;
+  }
+
+  .panel{
+    background:var(--surface);
+    border-radius:20px;
+    box-shadow:var(--shadow);
+    padding:28px;
+  }
+
+  .toggle-row{
+    display:flex;
+    gap:10px;
+    background:var(--bg);
+    padding:6px;
+    border-radius:14px;
+    margin-bottom:22px;
+  }
+
+  .toggle-btn{
+    flex:1;
+    border:none;
+    background:transparent;
+    padding:12px 10px;
+    font-family:'Cairo', sans-serif;
+    font-weight:700;
+    font-size:14px;
+    color:var(--ink-soft);
+    border-radius:10px;
+    cursor:pointer;
+    transition:all .18s ease;
+  }
+
+  .toggle-btn.active{
+    background:var(--surface);
+    color:var(--brand);
+    box-shadow:0 4px 14px -6px rgba(22,27,51,0.25);
+  }
+
+  .fields-row{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:16px;
+    margin-bottom:20px;
+  }
+
+  @media (max-width:560px){
+    .fields-row{ grid-template-columns:1fr; }
+  }
+
+  .field label{
+    display:block;
+    font-size:12.5px;
+    font-weight:700;
+    color:var(--ink-soft);
+    margin-bottom:8px;
+  }
+
+  .field .input-wrap{
+    position:relative;
+  }
+
+  .field input{
+    width:100%;
+    border:1.5px solid var(--line);
+    border-radius:12px;
+    padding:13px 16px;
+    font-family:'Manrope', sans-serif;
+    font-size:15px;
+    font-weight:700;
+    color:var(--ink);
+    background:var(--bg);
+    transition:border-color .15s ease;
+  }
+
+  .field input:focus{
+    outline:none;
+    border-color:var(--brand);
+    background:#fff;
+  }
+
+  .field .hint{
+    font-size:11.5px;
+    color:var(--ink-soft);
+    margin-top:6px;
+  }
+
+  button.submit{
+    width:100%;
+    background:linear-gradient(120deg, var(--coral), #ff8360);
+    color:#fff;
+    border:none;
+    padding:16px;
+    border-radius:14px;
+    font-family:'Cairo', sans-serif;
+    font-weight:800;
+    font-size:16px;
+    cursor:pointer;
+    box-shadow:0 12px 24px -10px rgba(255,107,74,0.55);
+    transition:transform .12s ease, box-shadow .12s ease;
+  }
+
+  button.submit:hover{
+    transform:translateY(-1px);
+  }
+
+  button.submit:disabled{
+    background:#C9CDDB;
+    box-shadow:none;
+    cursor:progress;
+    transform:none;
+  }
+
+  button.submit:focus-visible,
+  .toggle-btn:focus-visible{
+    outline:2px solid var(--brand);
+    outline-offset:3px;
+  }
+
+  .status{
+    margin-top:14px;
+    text-align:center;
+    font-size:13.5px;
+    font-weight:700;
+    color:var(--ink-soft);
+    min-height:18px;
+  }
+
+  .status.error{
+    color:var(--coral);
+  }
+
+  .insights{
+    display:flex;
+    gap:12px;
+    flex-wrap:wrap;
+    margin:28px 0 6px;
+  }
+
+  .insight-card{
+    flex:1;
+    min-width:180px;
+    border-radius:16px;
+    padding:18px 20px;
+    color:#fff;
+  }
+
+  .insight-card.segment{
+    background:linear-gradient(135deg, var(--violet), #8b7cf0);
+  }
+
+  .insight-card.risk{
+    background:linear-gradient(135deg, var(--coral), #ff8f73);
+  }
+
+  .insight-card .label{
+    font-size:11.5px;
+    font-weight:700;
+    opacity:0.85;
+    margin-bottom:6px;
+  }
+
+  .insight-card .value{
+    font-family:'Manrope', sans-serif;
+    font-size:24px;
+    font-weight:800;
+  }
+
+  .results{
+    margin-top:36px;
+    display:none;
+  }
+
+  .results.visible{
+    display:block;
+  }
+
+  .results-title{
+    font-size:15px;
+    font-weight:800;
+    margin:0 0 16px;
+    color:var(--ink);
+  }
+
+  .product-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fill, minmax(200px, 1fr));
+    gap:18px;
+  }
+
+  .product-card{
+    background:var(--surface);
+    border-radius:18px;
+    overflow:hidden;
+    box-shadow:0 6px 18px -12px rgba(22,27,51,0.25);
+    border:1px solid var(--line);
+    display:flex;
+    flex-direction:column;
+    transition:transform .15s ease, box-shadow .15s ease;
+  }
+
+  .product-card:hover{
+    transform:translateY(-3px);
+    box-shadow:0 14px 28px -14px rgba(22,27,51,0.3);
+  }
+
+  .product-thumb{
+    aspect-ratio:1/1;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:40px;
+    color:#fff;
+  }
+
+  .product-thumb img{
+    width:100%;
+    height:100%;
+    object-fit:cover;
+    display:block;
+  }
+
+  .product-body{
+    padding:14px 16px 16px;
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+    flex:1;
+  }
+
+  .product-name{
+    font-size:13.5px;
+    font-weight:700;
+    line-height:1.4;
+    color:var(--ink);
+    min-height:36px;
+  }
+
+  .product-price{
+    font-family:'Manrope', sans-serif;
+    font-size:18px;
+    font-weight:800;
+    color:var(--brand);
+    margin-top:auto;
+  }
+
+  .empty-note{
+    text-align:center;
+    padding:30px 0;
+    color:var(--ink-soft);
+    font-weight:700;
+    font-size:13.5px;
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    * { transition:none !important; }
+  }
+</style>
+</head>
+
+<body>
+
+<section class="hero">
+  <div class="hero-inner">
+    <h1>Customer Intelligence Recommender</h1>
+  </div>
+</section>
+
+<div class="container">
+  <div class="panel">
+    <form id="recommend-form">
+
+      <div class="toggle-row" role="group" aria-label="Customer Type">
+        <button type="button" class="toggle-btn active" id="btn-existing" aria-pressed="true">
+          Existing Customer
+        </button>
+
+        <button type="button" class="toggle-btn" id="btn-new" aria-pressed="false">
+          New Customer
+        </button>
+      </div>
+
+      <div class="fields-row">
+
+        <div class="field" id="id-field">
+          <label for="customer-id">Customer ID</label>
+
+          <div class="input-wrap">
+            <input
+              type="number"
+              id="customer-id"
+              placeholder="Example: 17850"
+              inputmode="numeric"
+            >
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="budget">Budget (Optional)</label>
+
+          <div class="input-wrap">
+            <input
+              type="number"
+              id="budget"
+              placeholder="Example: 80"
+              min="0"
+              step="0.01"
+            >
+          </div>
+
+          <div class="hint">
+            Leave empty to show the best-selling products
+          </div>
+        </div>
+
+      </div>
+
+      <button type="submit" class="submit" id="submit-btn">
+        Get Recommendations
+      </button>
+
+      <div class="status" id="status" role="status" aria-live="polite"></div>
+
+    </form>
+
+    <div class="insights" id="insights"></div>
+  </div>
+
+  <section class="results" id="results" aria-live="polite">
+
+    <div class="results-title">
+      Recommended Products
+    </div>
+
+    <div class="product-grid" id="product-grid"></div>
+
+  </section>
+</div>
+
+<script>
+  const API_URL = "http://127.0.0.1:8000/predict";
+
+  const btnExisting = document.getElementById("btn-existing");
+  const btnNew = document.getElementById("btn-new");
+  const idField = document.getElementById("id-field");
+  const customerIdInput = document.getElementById("customer-id");
+  const budgetInput = document.getElementById("budget");
+  const form = document.getElementById("recommend-form");
+  const submitBtn = document.getElementById("submit-btn");
+  const statusEl = document.getElementById("status");
+  const insightsEl = document.getElementById("insights");
+  const resultsEl = document.getElementById("results");
+  const productGrid = document.getElementById("product-grid");
+
+  let isNewCustomer = false;
+
+  const CARD_GRADIENTS = [
+    "linear-gradient(135deg,#0E7C7B,#12A3A1)",
+    "linear-gradient(135deg,#6C5CE7,#8B7CF0)",
+    "linear-gradient(135deg,#FF6B4A,#FF8F73)",
+    "linear-gradient(135deg,#FFB020,#FFC85C)",
+    "linear-gradient(135deg,#3B5BFF,#6C8CFF)",
+  ];
+
+  function categoryIcon(description){
+    const d = (description || "").toUpperCase();
+
+    if (d.includes("LIGHT") || d.includes("LAMP")) return "💡";
+    if (d.includes("BAG")) return "👜";
+    if (d.includes("MUG") || d.includes("CUP")) return "☕";
+    if (d.includes("CARD")) return "🎴";
+    if (d.includes("BOX")) return "📦";
+    if (d.includes("CANDLE")) return "🕯";
+    if (d.includes("CHAIR") || d.includes("CABINET") || d.includes("STOOL")) return "🪑";
+    if (d.includes("HEART")) return "💗";
+    if (d.includes("CAKE")) return "🧁";
+    if (d.includes("CLOCK")) return "🕰";
+
+    return "🎁";
+  }
+
+  function setCustomerType(newCustomer){
+    isNewCustomer = newCustomer;
+
+    btnExisting.classList.toggle("active", !newCustomer);
+    btnNew.classList.toggle("active", newCustomer);
+
+    btnExisting.setAttribute("aria-pressed", String(!newCustomer));
+    btnNew.setAttribute("aria-pressed", String(newCustomer));
+
+    idField.style.display = newCustomer ? "none" : "block";
+  }
+
+  btnExisting.addEventListener("click", () => setCustomerType(false));
+  btnNew.addEventListener("click", () => setCustomerType(true));
+
+  function setStatus(message, isError){
+    statusEl.textContent = message || "";
+    statusEl.classList.toggle("error", Boolean(isError));
+  }
+
+  function formatPrice(value){
+    const num = Number(value);
+
+    if (Number.isNaN(num)) return "$—";
+
+    return "$" + num.toFixed(2);
+  }
+
+  function renderInsights(data){
+    insightsEl.innerHTML = "";
+
+    if (data.segment){
+      const card = document.createElement("div");
+
+      card.className = "insight-card segment";
+
+      card.innerHTML =
+        `<div class="label">Customer Segment</div>
+         <div class="value">${data.segment}</div>`;
+
+      insightsEl.appendChild(card);
+    }
+
+    if (typeof data.churn_risk === "number"){
+      const card = document.createElement("div");
+
+      card.className = "insight-card risk";
+
+      card.innerHTML =
+        `<div class="label">Churn Risk</div>
+         <div class="value">${Math.round(data.churn_risk * 100)}%</div>`;
+
+      insightsEl.appendChild(card);
+    }
+  }
+
+  function renderProducts(products){
+    productGrid.innerHTML = "";
+
+    if (!products || products.length === 0){
+      const empty = document.createElement("div");
+
+      empty.className = "empty-note";
+      empty.textContent = "No recommendations available.";
+
+      productGrid.appendChild(empty);
+
+      return;
+    }
+
+    products.forEach((item, i) => {
+      const card = document.createElement("div");
+
+      card.className = "product-card";
+
+      const thumb = document.createElement("div");
+
+      thumb.className = "product-thumb";
+      thumb.style.background =
+        CARD_GRADIENTS[i % CARD_GRADIENTS.length];
+
+      thumb.textContent = categoryIcon(item.Description);
+
+      if (item.image_path){
+        const img = document.createElement("img");
+
+        img.src = item.image_path;
+        img.alt = item.Description || item.StockCode || "product";
+
+        img.onerror = () => {
+          img.remove();
+        };
+
+        thumb.textContent = "";
+        thumb.appendChild(img);
+      }
+
+      const body = document.createElement("div");
+
+      body.className = "product-body";
+
+      const name = document.createElement("div");
+
+      name.className = "product-name";
+      name.textContent =
+        item.Description || item.StockCode || "Product";
+
+      const price = document.createElement("div");
+
+      price.className = "product-price";
+      price.textContent = formatPrice(item.UnitPrice);
+
+      body.appendChild(name);
+      body.appendChild(price);
+
+      card.appendChild(thumb);
+      card.appendChild(body);
+
+      productGrid.appendChild(card);
+    });
+  }
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    const payload = {
+      is_new_customer: isNewCustomer,
+      customer_id: null,
+      budget: null
+    };
+
+    if (!isNewCustomer){
+      const idVal = customerIdInput.value.trim();
+
+      if (!idVal){
+        setStatus("Please enter the Customer ID.", true);
+        return;
+      }
+
+      payload.customer_id = Number(idVal);
+    }
+
+    const budgetVal = budgetInput.value.trim();
+
+    if (budgetVal){
+      payload.budget = Number(budgetVal);
+    }
+
+    submitBtn.disabled = true;
+
+    setStatus("Getting recommendations...", false);
+
+    resultsEl.classList.remove("visible");
+    insightsEl.innerHTML = "";
+
+    try{
+      const response = await fetch(API_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(payload)
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || data.error){
+        setStatus(
+          data.error || "Something went wrong. Please try again.",
+          true
+        );
+
+        return;
+      }
+
+      setStatus("", false);
+
+      renderInsights(data);
+      renderProducts(data.recommended_products);
+
+      resultsEl.classList.add("visible");
+
+    } catch (err){
+      setStatus(
+        "Unable to connect to the server. Make sure it is running on 127.0.0.1:8000",
+        true
+      );
+
+    } finally{
+      submitBtn.disabled = false;
+    }
+  });
+</script>
+
+</body>
+</html>
+```

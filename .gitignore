@@ -1,0 +1,7 @@
+.env
+__pycache__/
+*.pyc
+data/Online Retail.xlsx
+data/clean_online_retail.csv
+models/item_similarity.pkl
+models/conf_matrix.pkl
