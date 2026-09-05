@@ -94,37 +94,40 @@ A lightweight **HTML/CSS/JS front-end** (`index.html`) consumes this API directl
 - **Front-End**: HTML, CSS, vanilla JavaScript
 
 ## Repository Structure
+
+```
 customer-intelligence-system/
 ├── README.md
 ├── requirements.txt
-├── .env ← not committed (see Setup below)
+├── .env                          ← not committed (see Setup below)
 ├── .gitignore
-├── app.py ← FastAPI backend (Phase 8)
-├── image_generator.py ← product image generation + caching
-├── index.html ← front-end
+├── app.py                        ← FastAPI backend (Phase 8)
+├── image_generator.py            ← product image generation + caching
+├── index.html                    ← front-end
 ├── data/
-│ ├── clean_online_retail.csv ← not committed (regenerate, see below)
-│ ├── customer_segments.csv
-│ └── customer_segments_with_churn.csv
+│   ├── clean_online_retail.csv   ← not committed (regenerate, see below)
+│   ├── customer_segments.csv
+│   └── customer_segments_with_churn.csv
 ├── notebooks/
-│ ├── data_cleaning.ipynb
-│ ├── rfm_segmentation.ipynb
-│ ├── churn_prediction.ipynb
-│ ├── neural_network.ipynb
-│ └── recommender.ipynb
+│   ├── data_cleaning.ipynb
+│   ├── rfm_segmentation.ipynb
+│   ├── churn_prediction.ipynb
+│   ├── neural_network.ipynb
+│   └── recommender.ipynb
 ├── models/
-│ ├── scaler.pkl
-│ ├── kmeans_model.pkl
-│ ├── churn_model.pkl
-│ ├── product_lookup.pkl
-│ ├── avg_price.pkl
-│ ├── best_sellers.pkl
-│ ├── item_similarity.pkl ← not committed (regenerate, see below)
-│ └── conf_matrix.pkl ← not committed (regenerate, see below)
+│   ├── scaler.pkl
+│   ├── kmeans_model.pkl
+│   ├── churn_model.pkl
+│   ├── product_lookup.pkl
+│   ├── avg_price.pkl
+│   ├── best_sellers.pkl
+│   ├── item_similarity.pkl       ← not committed (regenerate, see below)
+│   └── conf_matrix.pkl           ← not committed (regenerate, see below)
 └── images/
-└── products/ ← cached generated product images
+    └── products/                 ← cached generated product images
+```
 
-**Note on excluded files**: `item_similarity.pkl` and `conf_matrix.pkl` exceed GitHub's 100 MB file size limit and are excluded via `.gitignore`. Both are deterministic outputs of `recommender.ipynb` — running that notebook once regenerates them locally. The raw dataset (`Online_Retail.xlsx`) and its cleaned version are excluded for the same size-related reason.
+**Note on excluded files**: `item_similarity.pkl` and `conf_matrix.pkl` exceed GitHub's 100 MB file size limit and are excluded via `.gitignore`. Both are deterministic outputs of `05_recommender.ipynb` — running that notebook once regenerates them locally. The raw dataset (`Online_Retail.xlsx`) and its cleaned version are excluded for the same size-related reason.
 
 ## Setup & How to Run
 
@@ -141,14 +144,20 @@ pip install -r requirements.txt
 Download `Online Retail.xlsx` from the [UCI repository](https://archive.ics.uci.edu/dataset/352/online+retail) and place it in `data/`.
 
 **3. Run the notebooks in this order**
+
+```
 data_cleaning.ipynb → rfm_segmentation.ipynb → churn_prediction.ipynb → neural_network.ipynb → recommender.ipynb
+```
 
 Each notebook saves outputs consumed by the next, and `recommender.ipynb` regenerates the two large model files excluded from the repo (`item_similarity.pkl`, `conf_matrix.pkl`).
 
 **4. Set up image generation (optional)**
 
 Create a `.env` file in the project root with a Hugging Face token that has *"Make calls to Inference Providers"* permission:
+
+```
 HF_TOKEN=hf_your_token_here
+```
 
 Without this step, the API still works — product cards simply fall back to a colored category icon instead of a generated image.
 
