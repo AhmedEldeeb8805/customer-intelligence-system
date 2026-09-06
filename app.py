@@ -5,9 +5,10 @@ import pandas as pd
 import joblib
 import traceback
 from image_generator import get_or_generate_image
+from fastapi.middleware.cors import CORSMiddleware
+
 
 app = FastAPI(title="Customer Intelligence System API")
-from fastapi.middleware.cors import CORSMiddleware
 
 app.add_middleware(
     CORSMiddleware,
